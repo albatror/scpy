@@ -1,8 +1,19 @@
 import openpyxl
 import sys
+import os
 
-# Vérifiez si le mois est passé en argument, sinon utilisez un mois par défaut
-mois = sys.argv[1] if len(sys.argv) > 1 else 'JUIN 2025'
+def get_excel_filename(pattern):
+    """Lire le nom du fichier Excel correspondant au pattern depuis excel_filenames.txt"""
+    if os.path.exists('excel_filenames.txt'):
+        with open('excel_filenames.txt', 'r') as f:
+            filenames = [line.strip() for line in f.readlines()]
+        
+        # Chercher le fichier correspondant au pattern
+        for filename in filenames:
+            if pattern.lower() in filename.lower():
+                return filename
+    
+    return None
 
 # Tentative d'ouverture du fichier SORTIE.xlsx - DT
 try:
@@ -12,8 +23,12 @@ except FileNotFoundError:
     print("Erreur : Le fichier 'SORTIE.xlsx' est introuvable.")
     sys.exit(1)
 
-# Chargement du fichier Excel - Fichier à modifier selon le mois
-etat_file_name = f'ETAT DES HEURES SUPPLEMENTAIRES SIEGE JUILLET 2025.xlsx'
+# Chargement du fichier Excel - Récupération automatique du nom
+etat_file_name = get_excel_filename('etat des heures supplementaires')
+if not etat_file_name:
+    print("Erreur : Impossible de trouver le fichier 'ETAT DES HEURES SUPPLEMENTAIRES'")
+    sys.exit(1)
+
 print(f"Tentative d'ouverture du fichier : {etat_file_name}")
 
 try:

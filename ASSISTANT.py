@@ -1,6 +1,5 @@
-
 import tkinter as tk
-from tkinter import ttk, scrolledtext, simpledialog, messagebox
+from tkinter import ttk, scrolledtext, simpledialog, messagebox, filedialog
 import subprocess
 import os
 import sys
@@ -12,7 +11,6 @@ import ast
 
 scripts = [
     "000.INSTALL-MODULES.py",
-    "00.MAJ-NOMS.py",
     "1.AJOUT_TITRES.py",
     "2.SORTIE.py",
     "3.REORG-SORTIE.py",
@@ -314,6 +312,10 @@ class ScriptExecutor(tk.Tk):
         button_frame = tk.Frame(self)
         button_frame.pack(pady=5)
 
+        # Bouton CHARGER FICHIERS EXCEL
+        tk.Button(button_frame, text="CHARGER FICHIERS EXCEL", 
+                  command=self.load_excel_files).pack(side=tk.LEFT, padx=10)
+
         # Bouton START
         tk.Button(button_frame, text="START", command=self.start_scripts).pack(side=tk.LEFT, padx=10)
 
@@ -324,7 +326,48 @@ class ScriptExecutor(tk.Tk):
         # Charger les noms de fichiers existants
         self.load_excel_filenames()
 
+    def load_excel_files(self):
+        """Permet à l'utilisateur de sélectionner manuellement les fichiers Excel"""
+        excel_files = []
+        
+        # Types de fichiers attendus
+        file_types = [
+            ("ETAT DES HEURES SUPPLEMENTAIRES", "etat des heures supplementaires"),
+            ("GTA HS PAIE", "gta hs paie"),
+            ("INDEMNITE ASTREINTE", "indemnite astreinte"),
+            ("INDEMNITE PERMANENCE", "indemnite permanence"),
+            ("INTERVENTION ASTREINTE", "intervention astreinte")
+        ]
+        
+        for display_name, pattern in file_types:
+            file_path = filedialog.askopenfilename(
+                title=f"Sélectionnez le fichier {display_name}",
+                filetypes=[("Fichiers Excel", "*.xlsx"), ("Tous les fichiers", "*.*")],
+                initialdir=os.getcwd()
+            )
+            
+            if file_path:
+                filename = os.path.basename(file_path)
+                excel_files.append(filename)
+                self.log(f"Fichier sélectionné : {filename}")
+            else:
+                self.log(f"Aucun fichier sélectionné pour {display_name}")
+                return
+        
+        if excel_files:
+            self.save_excel_filenames(excel_files)
+            self.load_excel_filenames()
+            self.log("Tous les fichiers Excel ont été chargés avec succès!")
+        else:
+            self.log("Aucun fichier n'a été sélectionné.")
+
     def start_scripts(self):
+        # Vérifier si les fichiers Excel ont été chargés
+        if not os.path.exists(EXCEL_FILENAMES_FILE):
+            messagebox.showwarning("Fichiers manquants", 
+                                   "Veuillez d'abord charger les fichiers Excel en cliquant sur 'CHARGER FICHIERS EXCEL'.")
+            return
+        
         self.clear_outputs()
         self.progress["maximum"] = len(scripts)
         
@@ -334,11 +377,6 @@ class ScriptExecutor(tk.Tk):
             if script == "000.INSTALL-MODULES.py":
                 if not self.check_modules():
                     self.run_script(script)
-            elif script == "00.MAJ-NOMS.py":
-                self.run_script(script)
-                self.log("Pause pour s'assurer que les fichiers sont mis à jour...")
-                time.sleep(2)  # Pause de 2 secondes
-                self.update_excel_filenames()
             else:
                 self.run_script(script)
             
@@ -350,16 +388,6 @@ class ScriptExecutor(tk.Tk):
     def open_category_editor(self):
         # Ouvrir la fenêtre d'édition des catégories
         CategoryEditor(self)
-
-    def update_excel_filenames(self):
-        # Recherche tous les fichiers Excel dans le répertoire courant
-        excel_files = glob.glob("*.xlsx") + glob.glob("*.xls")
-        if excel_files:
-            self.save_excel_filenames(excel_files)
-            self.load_excel_filenames()
-            self.log(f"Fichiers Excel trouvés et enregistrés : {', '.join(excel_files)}")
-        else:
-            self.log("Aucun fichier Excel trouvé dans le répertoire courant.")
 
     def check_modules(self):
         missing_modules = []
@@ -395,6 +423,7 @@ class ScriptExecutor(tk.Tk):
     def log(self, message):
         self.console_output.insert(tk.END, f"{message}\n")
         self.console_output.see(tk.END)
+        self.update_idletasks()
 
     def save_excel_filenames(self, filenames):
         with open(EXCEL_FILENAMES_FILE, 'w') as f:
@@ -408,7 +437,7 @@ class ScriptExecutor(tk.Tk):
                 content = f.read()
                 self.file_visualization.insert(tk.END, content)
         else:
-            self.file_visualization.insert(tk.END, "Aucun fichier Excel chargé.")
+            self.file_visualization.insert(tk.END, "Aucun fichier Excel chargé.\nCliquez sur 'CHARGER FICHIERS EXCEL' pour commencer.")
 
 if __name__ == "__main__":
     app = ScriptExecutor()

@@ -1,14 +1,32 @@
-
 import pandas as pd
 import sys
+import os
+
+def get_excel_filename(pattern):
+    """Lire le nom du fichier Excel correspondant au pattern depuis excel_filenames.txt"""
+    if os.path.exists('excel_filenames.txt'):
+        with open('excel_filenames.txt', 'r') as f:
+            filenames = [line.strip() for line in f.readlines()]
+        
+        # Chercher le fichier correspondant au pattern
+        for filename in filenames:
+            if pattern.lower() in filename.lower():
+                return filename
+    
+    return None
 
 # Print script arguments for debugging
 print(f"Script arguments: {sys.argv}")
 
-# R1 Chargement du fichier Excel - Fichier à modifier selon le mois
+# R1 Chargement du fichier Excel - Récupération automatique du nom
+excel_file = get_excel_filename('gta hs paie')
+if not excel_file:
+    print("Erreur : Impossible de trouver le fichier 'GTA HS PAIE'")
+    sys.exit(1)
+
+print(f"Attempting to read Excel file: {excel_file}")
+
 try:
-    excel_file = sys.argv[1] if len(sys.argv) > 1 else 'GTA HS PAIE JUILLET 2025.xlsx'
-    print(f"Attempting to read Excel file: {excel_file}")
     df = pd.read_excel(excel_file)
 except Exception as e:
     print(f"Error reading Excel file: {e}")

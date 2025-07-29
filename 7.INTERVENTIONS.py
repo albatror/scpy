@@ -1,11 +1,31 @@
 import openpyxl
+import os
+
+def get_excel_filename(pattern):
+    """Lire le nom du fichier Excel correspondant au pattern depuis excel_filenames.txt"""
+    if os.path.exists('excel_filenames.txt'):
+        with open('excel_filenames.txt', 'r') as f:
+            filenames = [line.strip() for line in f.readlines()]
+        
+        # Chercher le fichier correspondant au pattern
+        for filename in filenames:
+            if pattern.lower() in filename.lower():
+                return filename
+    
+    return None
 
 # R2 Ouvrir le fichier SORTIE DU MOIS EN COURS.xlsx
 sortie_workbook = openpyxl.load_workbook('SORTIE.xlsx')
 sortie_sheet = sortie_workbook['INTERVENTIONS']
 
-# R6 Ouvrir le fichier INTERVENTION ASTREINTE MOIS ANNEE
-intervention_workbook = openpyxl.load_workbook('INTERVENTION ASTREINTE SIEGE JUILLET 2025.xlsx')
+# R6 Ouvrir le fichier INTERVENTION ASTREINTE - Récupération automatique du nom
+intervention_file_name = get_excel_filename('intervention astreinte')
+if not intervention_file_name:
+    print("Erreur : Impossible de trouver le fichier 'INTERVENTION ASTREINTE'")
+    exit(1)
+
+print(f"Ouverture du fichier : {intervention_file_name}")
+intervention_workbook = openpyxl.load_workbook(intervention_file_name)
 intervention_technique_sheet = intervention_workbook['TECHNIQUE']
 intervention_administratif_sheet = intervention_workbook['ADMINISTRATIF']
 
@@ -36,5 +56,6 @@ def update_dates(sheet):
 update_dates(intervention_technique_sheet)
 update_dates(intervention_administratif_sheet)
 
-# R6 Enregistrer les modifications dans le fichier INTERVENTION ASTREINTE MOIS ANNEE
-intervention_workbook.save('INTERVENTION ASTREINTE SIEGE JUILLET 2025.xlsx')
+# R6 Enregistrer les modifications dans le fichier INTERVENTION ASTREINTE
+intervention_workbook.save(intervention_file_name)
+print(f"Fichier {intervention_file_name} mis à jour avec succès.")

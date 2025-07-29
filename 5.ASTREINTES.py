@@ -1,11 +1,31 @@
 import openpyxl
+import os
+
+def get_excel_filename(pattern):
+    """Lire le nom du fichier Excel correspondant au pattern depuis excel_filenames.txt"""
+    if os.path.exists('excel_filenames.txt'):
+        with open('excel_filenames.txt', 'r') as f:
+            filenames = [line.strip() for line in f.readlines()]
+        
+        # Chercher le fichier correspondant au pattern
+        for filename in filenames:
+            if pattern.lower() in filename.lower():
+                return filename
+    
+    return None
 
 # R2 Ouvrir le fichier SORTIE DU MOIS EN COURS.xlsx
 sortie_workbook = openpyxl.load_workbook('SORTIE.xlsx')
 sortie_sheet = sortie_workbook['ASTREINTES']
 
-# R4 Ouvrir le fichier INDEMNITE ASTREINTE MOIS ANNEE
-indemnite_workbook = openpyxl.load_workbook('INDEMNITE ASTREINTE SIEGE JUILLET 2025.xlsx')
+# R4 Ouvrir le fichier INDEMNITE ASTREINTE - Récupération automatique du nom
+indemnite_file_name = get_excel_filename('indemnite astreinte')
+if not indemnite_file_name:
+    print("Erreur : Impossible de trouver le fichier 'INDEMNITE ASTREINTE'")
+    exit(1)
+
+print(f"Ouverture du fichier : {indemnite_file_name}")
+indemnite_workbook = openpyxl.load_workbook(indemnite_file_name)
 indemnite_technique_sheet = indemnite_workbook['TECHNIQUE']
 indemnite_administratif_sheet = indemnite_workbook['ADMINISTRATIF']
 
@@ -36,5 +56,6 @@ def update_dates(sheet):
 update_dates(indemnite_technique_sheet)
 update_dates(indemnite_administratif_sheet)
 
-# R4 Enregistrer les modifications dans le fichier INDEMNITE ASTREINTE MOIS ANNEE
-indemnite_workbook.save('INDEMNITE ASTREINTE SIEGE JUILLET 2025.xlsx')
+# R4 Enregistrer les modifications dans le fichier INDEMNITE ASTREINTE
+indemnite_workbook.save(indemnite_file_name)
+print(f"Fichier {indemnite_file_name} mis à jour avec succès.")
